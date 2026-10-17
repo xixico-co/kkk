@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>语块进阶 · 表达力训练器</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: "微软雅黑", sans-serif;
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    color: #e2e8f0; margin: 0; padding: 20px; min-height: 100vh;
+  }
+  h1 { text-align: center; color: #a78bfa; margin-bottom: 4px; }
+  .subtitle { text-align: center; color: #94a3b8; font-size: 13px; margin-bottom: 20px; }
+  .nav { text-align: center; margin-bottom: 20px; }
+  .nav button {
+    background: #334155; color: #e2e8f0; border: none;
+    padding: 10px 18px; margin: 4px; border-radius: 8px;
+    cursor: pointer; font-size: 15px; transition: 0.2s;
+  }
+  .nav button:hover { background: #475569; }
+  .nav button.active { background: #8b5cf6; color: #fff; }
+  .panel { display: none; max-width: 780px; margin: 0 auto; }
+  .panel.active { display: block; }
+  .card {
+    background: #1e293b; border-radius: 16px; padding: 24px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4); margin-bottom: 16px;
+  }
+  textarea {
+    width: 100%; height: 200px; background: #0f172a; color: #e2e8f0;
+    border: 1px solid #334155; border-radius: 10px; padding: 12px;
+    font-family: Consolas, monospace; font-size: 14px; resize: vertical;
+  }
+  .btn-main {
+    background: #8b5cf6; color: #fff; border: none;
+    padding: 12px 24px; border-radius: 8px; cursor: pointer;
+    font-size: 16px; margin: 8px 4px 0 0; transition: 0.2s;
+  }
+  .btn-main:hover { background: #7c3aed; }
+  .btn-gray { background: #475569; }
+  .btn-gray:hover { background: #64748b; }
+  .btn-green { background: #22c55e; }
+  .btn-green:hover { background: #16a34a; }
+  .btn-amber { background: #f59e0b; }
+  .btn-amber:hover { background: #d97706; }
+  .btn-red { background: #ef4444; }
+  .btn-red:hover { background: #dc2626; }
+  .hint { color: #94a3b8; font-size: 13px; line-height: 1.8; }
+  .hint code { background: #0f172a; padding: 2px 6px; border-radius: 4px; color: #a78bfa; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+  input[type=file] { color: #94a3b8; }
+
+  /* 通用卡片列表 */
+  .chunk-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+  .chunk-item {
+    background: #334155; border-radius: 12px; padding: 14px;
+    cursor: pointer; transition: 0.2s; border-left: 4px solid #8b5cf6;
+  }
+  .chunk-item:hover { background: #475569; transform: translateY(-2px); }
+  .chunk-item .intent { font-size: 13px; color: #cbd5e1; margin-bottom: 6px; }
+  .chunk-item .chunk-text { font-size: 16px; color: #fff; font-weight: bold; margin-bottom: 8px; }
+  .chunk-item .meta { font-size: 11px; color: #94a3b8; display: flex; justify-content: space-between; }
+  .level-bar { height: 4px; background: #0f172a; border-radius: 2px; margin-top: 6px; overflow: hidden; }
+  .level-fill { height: 100%; background: linear-gradient(90deg, #8b5cf6, #22c55e); transition: 0.4s; }
+
+  /* 训练流程 */
+  .stage-indicator { display: flex; justify-content: center; gap: 8px; margin-bottom: 16px; }
+  .stage-dot {
+    width: 32px; height: 32px; border-radius: 50%; background: #334155;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; color: #94a3b8;
+  }
+  .stage-dot.active { background: #8b5cf6; color: #fff; }
+  .stage-dot.done { background: #22c55e; color: #fff; }
+
+  .flip-card { perspective: 1000px; height: 220px; cursor: pointer; margin: 16px 0; }
+  .flip-inner {
+    position: relative; width: 100%; height: 100%;
+    transition: transform 0.6s; transform-style: preserve-3d;
+  }
+  .flip-card.flipped .flip-inner { transform: rotateY(180deg); }
+  .flip-front, .flip-back {
+    position: absolute; width: 100%; height: 100%;
+    backface-visibility: hidden; border-radius: 14px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 20px; text-align: center;
+  }
+  .flip-front { background: #3b82f6; color: #fff; }
+  .flip-front .label { font-size: 12px; opacity: 0.8; margin-bottom: 12px; }
+  .flip-front .content { font-size: 20px; font-weight: bold; }
+  .flip-back { background: #0f172a; color: #e2e8f0; transform: rotateY(180deg); border: 2px solid #8b5cf6; }
+  .flip-back .chunk-text { font-size: 22px; color: #a78bfa; font-weight: bold; margin-bottom: 12px; }
+  .flip-back .example { font-size: 14px; color: #cbd5e1; line-height: 1.6; }
+
+  .option-btn {
+    display: block; width: 100%; text-align: left;
+    background: #334155; color: #e2e8f0; border: none;
+    padding: 14px 18px; margin: 8px 0; border-radius: 10px;
+    cursor: pointer; font-size: 15px; transition: 0.2s;
+  }
+  .option-btn:hover { background: #475569; }
+  .option-btn.correct { background: #22c55e !important; color: #fff; }
+  .option-btn.wrong { background: #ef4444 !important; color: #fff; animation: shake 0.3s; }
+  @keyframes shake {
+    0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)}
+  }
+
+  .passage { background: #0f172a; padding: 16px; border-radius: 10px; line-height: 2; font-size: 15px; margin-bottom: 12px; }
+  .blank { color: #a78bfa; font-weight: bold; border-bottom: 2px solid #8b5cf6; padding: 0 8px; }
+
+  .reconstruct-area {
+    display: flex; flex-wrap: wrap; gap: 8px; min-height: 60px;
+    background: #0f172a; border: 2px dashed #475569; border-radius: 10px;
+    padding: 12px; margin-bottom: 12px;
+  }
+  .reconstruct-area.filled { border-style: solid; border-color: #22c55e; }
+  .piece {
+    background: #8b5cf6; color: #fff; padding: 8px 14px;
+    border-radius: 8px; cursor: grab; user-select: none; font-size: 15px;
+  }
+  .piece:active { cursor: grabbing; }
+  .piece.placed { background: #334155; cursor: default; }
+  .pool { display: flex; flex-wrap: wrap; gap: 8px; min-height: 40px; margin-bottom: 12px; }
+
+  textarea.create-input {
+    width: 100%; height: 120px; background: #0f172a; color: #e2e8f0;
+    border: 1px solid #334155; border-radius: 10px; padding: 12px;
+    font-family: inherit; font-size: 15px; resize: vertical;
+  }
+  .example-box {
+    background: #0f172a; border-left: 4px solid #22c55e;
+    padding: 12px 16px; border-radius: 8px; margin-top: 12px;
+    color: #cbd5e1; font-size: 14px; line-height: 1.7;
+  }
+
+  /* 复习队列 */
+  .review-stats {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px;
+  }
+  .stat-box {
+    background: #334155; border-radius: 10px; padding: 14px; text-align: center;
+  }
+  .stat-box .num { font-size: 24px; color: #a78bfa; font-weight: bold; }
+  .stat-box .label { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+
+  .toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+    background: #22c55e; color: #fff; padding: 12px 24px; border-radius: 10px;
+    font-size: 15px; opacity: 0; transition: opacity 0.3s; pointer-events: none;
+    z-index: 100;
+  }
+  .toast.show { opacity: 1; }
+  .toast.error { background: #ef4444; }
+</style>
+</head>
+<body>
+
+<h1>🧠 语块进阶</h1>
+<p class="subtitle">识记 → 理解 → 提取 → 创造 · 让语块自己跳出来</p>
+
+<div class="nav">
+  <button class="active" onclick="showPanel('train', this)">语块训练</button>
+  <button onclick="showPanel('review', this)">复习队列</button>
+  <button onclick="showPanel('import', this)">导入管理</button>
+  <button onclick="showPanel('report', this)">表达力报告</button>
+</div>
+
+<!-- ===== 训练 ===== -->
+<div id="train" class="panel active">
+  <div class="card" id="trainCard"></div>
+</div>
+
+<!-- ===== 复习队列 ===== -->
+<div id="review" class="panel">
+  <div class="card">
+    <h2>📚 复习队列</h2>
+    <div class="review-stats" id="reviewStats"></div>
+    <div id="reviewList"></div>
+  </div>
+</div>
+
+<!-- ===== 导入 ===== -->
+<div id="import" class="panel">
+  <div class="card">
+    <h2>📥 导入语块库</h2>
+    <p class="hint">
+      每行一条，用 <code>|</code> 分隔。格式：<br>
+      <code>语块|表达意图|目标语块|例句|语域|类型</code><br><br>
+      <b>语域</b>：通用 / 学术<br>
+      <b>类型</b>：研究 / 文本 / 参与者 / 通用<br><br>
+      示例：<br>
+      <code>语块|引出研究目的|本文旨在探讨……|本文旨在探讨语块教学对口语流利性的影响。|学术|研究</code><br>
+      <code>语块|表示递进|值得注意的是|值得注意的是，这一现象在低水平学习者中更为明显。|学术|参与者</code><br>
+      <code>语块|强调因果|鉴于此|鉴于此，本文尝试从语块视角切入。|学术|文本</code>
+    </p>
+    <textarea id="importText" placeholder="在这里粘贴你的语块..."></textarea>
+    <div class="row">
+      <button class="btn-main" onclick="doImport()">导入并保存</button>
+      <button class="btn-main btn-gray" onclick="loadSample()">载入示例</button>
+      <button class="btn-main btn-gray" onclick="clearAll()">清空语块库</button>
+      <input type="file" accept=".txt" onchange="loadFile(event)">
+    </div>
+    <p class="hint" id="importStatus" style="margin-top:12px;"></p>
+  </div>
+</div>
+
+<!-- ===== 报告 ===== -->
+<div id="report" class="panel">
+  <div class="card">
+    <h2>📊 表达力报告</h2>
+    <div id="reportContent"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   数据层
+   ============================================================ */
+const STORAGE_KEY = 'chunkBank_v1';
+let chunks = [];       // 所有语块
+let currentChunk = null;
+let currentStage = 0;  // 0识记 1理解 2提取 3创造
+
+// 语块对象结构:
+// { intent, chunk, example, register, type, level(0-5), nextReview(时间戳), reviews(次数) }
+
+function saveBank() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(chunks));
+}
+
+function loadBank() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return false;
+  try {
+    chunks = JSON.parse(raw);
+    return Array.isArray(chunks) && chunks.length > 0;
+  } catch (e) { return false; }
+}
+
+/* ============================================================
+   导入解析
+   ============================================================ */
+function parseText(text) {
+  const result = [];
+  const lines = text.split('\n');
+  for (let line of lines) {
+    line = line.trim();
+    if (!line || line.startsWith('#')) continue;
+    const parts = line.split('|').map(s => s.trim());
+    if (parts[0] !== '语块') continue;
+    if (parts.length < 6) continue;
+    result.push({
+      intent: parts[1],
+      chunk: parts[2],
+      example: parts[3],
+      register: parts[4] || '通用',
+      type: parts[5] || '通用',
+      level: 0,
+      nextReview: Date.now(),
+      reviews: 0
+    });
+  }
+  return result;
+}
+
+function doImport() {
+  const text = document.getElementById('importText').value;
+  if (!text.trim()) { showToast('请先粘贴语块', true); return; }
+  const parsed = parseText(text);
+  if (parsed.length === 0) { showToast('没有解析到有效语块，请检查格式', true); return; }
+  chunks = parsed;
+  saveBank();
+  document.getElementById('importStatus').textContent = `✅ 导入成功：${parsed.length} 条语块`;
+  showToast(`导入成功：${parsed.length} 条`);
+  renderTrainHome();
+}
+
+function loadFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => { document.getElementById('importText').value = ev.target.result; };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function clearAll() {
+  if (!confirm('确定清空语块库？')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  chunks = [];
+  document.getElementById('importStatus').textContent = '已清空。';
+  renderTrainHome();
+}
+
+function loadSample() {
+  document.getElementById('importText').value =
+`# 语块|表达意图|目标语块|例句|语域|类型
+语块|引出研究目的|本文旨在探讨……|本文旨在探讨语块教学对口语流利性的影响。|学术|研究
+语块|填补研究空白|该领域尚缺乏……|该领域尚缺乏针对低水平学习者的实证研究。|学术|研究
+语块|表示递进强调|值得注意的是|值得注意的是，这一现象在低水平学习者中更为明显。|学术|参与者
+语块|强调因果关系|鉴于此|鉴于此，本文尝试从语块视角切入分析。|学术|文本
+语块|总结研究结论|结果表明……|结果表明，间隔重复显著提升了语块保持率。|学术|研究
+语块|引出对比|与……一致的是|与以往研究一致的是，语块教学对输出能力有正向影响。|学术|文本
+语块|表达立场|本文认为……|本文认为，语块应当作为语言教学的基本单位。|学术|参与者
+语块|限定范围|就……而言|就学术写作而言，立场语块的缺失尤为突出。|学术|文本
+语块|表示让步|尽管……但……|尽管存在争议，但语块教学的有效性已被多项研究证实。|学术|参与者
+语块|强调重要性|具有重要意义|这一发现对二语教学实践具有重要意义。|学术|研究
+语块|日常表达-转折|话说回来|话说回来，这件事也没那么复杂。|通用|通用
+语块|日常表达-强调|不得不说|不得不说，他的表达确实很到位。|通用|通用
+语块|日常表达-递进|更进一步说|更进一步说，这背后反映的是思维方式的差异。|通用|通用
+语块|日常表达-总结|归根结底|归根结底，语言能力是靠积累出来的。|通用|通用`;
+}
+
+/* ============================================================
+   训练主流程
+   ============================================================ */
+function renderTrainHome() {
+  const card = document.getElementById('trainCard');
+  if (chunks.length === 0) {
+    card.innerHTML = `<h2>还没有语块</h2>
+      <p class="hint">去“导入管理”粘贴你的语块库，或点“载入示例”先体验一下。</p>
+      <button class="btn-main" onclick="showPanel('import', document.querySelectorAll('.nav button')[2])">去导入</button>`;
+    return;
+  }
+  // 按 nextReview 排序，取到期的
+  const now = Date.now();
+  const due = chunks.filter(c => c.nextReview <= now).sort((a,b) => a.level - b.level);
+  const list = due.length > 0 ? due : chunks.slice(0, 9);
+  const title = due.length > 0 ? `待复习（${due.length}）` : '全部已复习，可自由练习';
+
+  card.innerHTML = `<h2>🎯 ${title}</h2>
+    <p class="hint">点击语块开始四关卡训练。熟练度越高，下次复习间隔越长。</p>
+    <div class="chunk-list" id="chunkList"></div>`;
+  const box = document.getElementById('chunkList');
+  list.forEach((c, i) => {
+    const el = document.createElement('div');
+    el.className = 'chunk-item';
+    el.innerHTML = `<div class="intent">${c.intent}</div>
+      <div class="chunk-text">${c.chunk}</div>
+      <div class="meta"><span>${c.register} · ${c.type}</span><span>Lv.${c.level}</span></div>
+      <div class="level-bar"><div class="level-fill" style="width:${c.level*20}%"></div></div>`;
+    el.onclick = () => startTraining(c);
+    box.appendChild(el);
+  });
+}
+
+function startTraining(chunk) {
+  currentChunk = chunk;
+  currentStage = 0;
+  renderStage();
+}
+
+function renderStage() {
+  const card = document.getElementById('trainCard');
+  const stages = ['识记', '理解', '提取', '创造'];
+  const indicator = `<div class="stage-indicator">${stages.map((s, i) =>
+    `<div class="stage-dot ${i === currentStage ? 'active' : (i < currentStage ? 'done' : '')}">${i+1}</div>`
+  ).join('')}</div>`;
+
+  if (currentStage === 0) renderStage1(card, indicator);
+  else if (currentStage === 1) renderStage2(card, indicator);
+  else if (currentStage === 2) renderStage3(card, indicator);
+  else if (currentStage === 3) renderStage4(card, indicator);
+}
+
+/* -------- 关卡一：识记（翻转卡片 + 自评） -------- */
+function renderStage1(card, indicator) {
+  const c = currentChunk;
+  card.innerHTML = `${indicator}
+    <h2>关卡一 · 识记</h2>
+    <p class="hint">先看正面，在脑中回忆语块，再点击翻面验证。</p>
+    <div class="flip-card" id="flipCard">
+      <div class="flip-inner">
+        <div class="flip-front">
+          <div class="label">表达意图</div>
+          <div class="content">${c.intent}</div>
+        </div>
+        <div class="flip-back">
+          <div class="chunk-text">${c.chunk}</div>
+          <div class="example">${c.example}</div>
+        </div>
+      </div>
+    </div>
+    <div id="selfEval" style="display:none;">
+      <p class="hint">刚才回忆得怎么样？</p>
+      <button class="btn-main btn-green" onclick="evalStage1(3)">很熟练</button>
+      <button class="btn-main btn-amber" onclick="evalStage1(1)">有点模糊</button>
+      <button class="btn-main btn-red" onclick="evalStage1(0)">忘了</button>
+    </div>`;
+  document.getElementById('flipCard').onclick = function() {
+    this.classList.toggle('flipped');
+    if (this.classList.contains('flipped')) {
+      document.getElementById('selfEval').style.display = 'block';
+    }
+  };
+}
+
+function evalStage1(score) {
+  // 更新熟练度
+  if (score === 3) currentChunk.level = Math.min(5, currentChunk.level + 1);
+  else if (score === 0) currentChunk.level = Math.max(0, currentChunk.level - 1);
+  currentStage = 1;
+  renderStage();
+}
+
+/* -------- 关卡二：理解（语境填空） -------- */
+function renderStage2(card, indicator) {
+  const c = currentChunk;
+  // 生成干扰项：从其他语块里抽 3 个
+  const others = chunks.filter(x => x.chunk !== c.chunk).sort(() => Math.random() - 0.5).slice(0, 3);
+  const options = [c, ...others].sort(() => Math.random() - 0.5);
+
+  // 把例句中的目标语块挖空
+  const blanked = c.example.replace(c.chunk, '______');
+
+  card.innerHTML = `${indicator}
+    <h2>关卡二 · 理解</h2>
+    <p class="hint">根据语境，选出最合适的语块填入空白处。</p>
+    <div class="passage">${blanked}</div>
+    <div id="opts2"></div>
+    <div class="fb" id="fb2" style="display:none;margin-top:12px;padding:12px;border-radius:8px;background:#0f172a;"></div>`;
+  const box = document.getElementById('opts2');
+  options.forEach(o => {
+    const b = document.createElement('button');
+    b.className = 'option-btn'; b.textContent = o.chunk;
+    b.onclick = () => answerStage2(o.chunk === c.chunk, b);
+    box.appendChild(b);
+  });
+}
+
+function answerStage2(correct, btn) {
+  const c = currentChunk;
+  document.querySelectorAll('#opts2 .option-btn').forEach(b => b.disabled = true);
+  const fb = document.getElementById('fb2');
+  if (correct) {
+    btn.classList.add('correct');
+    fb.innerHTML = `✅ 正确！<br><b>${c.chunk}</b>：${c.example}`;
+    fb.style.display = 'block';
+    setTimeout(() => { currentStage = 2; renderStage(); }, 1600);
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('#opts2 .option-btn').forEach(b => {
+      if (b.textContent === c.chunk) b.classList.add('correct');
+    });
+    fb.innerHTML = `❌ 再体会一下。<br><b>${c.chunk}</b>：${c.example}`;
+    fb.style.display = 'block';
+    setTimeout(() => { currentStage = 2; renderStage(); }, 2200);
+  }
+}
+
+/* -------- 关卡三：提取（搭配重组） -------- */
+function renderStage3(card, indicator) {
+  const c = currentChunk;
+  // 把语块拆成单字或双字碎片
+  const pieces = splitChunk(c.chunk);
+  const shuffled = [...pieces].sort(() => Math.random() - 0.5);
+
+  card.innerHTML = `${indicator}
+    <h2>关卡三 · 提取</h2>
+    <p class="hint">把下面的碎片重新组合成完整语块，点击碎片按顺序放入上方区域。</p>
+    <div class="reconstruct-area" id="reconArea"></div>
+    <div class="pool" id="piecePool"></div>
+    <div class="row">
+      <button class="btn-main btn-gray" onclick="resetStage3()">重来</button>
+      <button class="btn-main" id="checkStage3" onclick="checkStage3()" style="display:none;">检查</button>
+    </div>
+    <div class="fb" id="fb3" style="display:none;margin-top:12px;padding:12px;border-radius:8px;background:#0f172a;"></div>`;
+
+  const pool = document.getElementById('piecePool');
+  shuffled.forEach(p => {
+    const el = document.createElement('div');
+    el.className = 'piece'; el.textContent = p;
+    el.onclick = () => placePiece(el);
+    pool.appendChild(el);
+  });
+}
+
+function splitChunk(chunk) {
+  // 按 1-2 字切分，保留标点
+  const result = [];
+  let i = 0;
+  while (i < chunk.length) {
+    const ch = chunk[i];
+    if (/[，。、；：？！……—]/.test(ch)) {
+      result.push(ch); i++;
+    } else if (i + 1 < chunk.length && /[，。、；：？！……—]/.test(chunk[i+1])) {
+      result.push(ch); i++;
+    } else {
+      result.push(chunk.substr(i, Math.min(2, chunk.length - i)));
+      i += 2;
+    }
+  }
+  return result;
+}
+
+function placePiece(el) {
+  const area = document.getElementById('reconArea');
+  el.classList.add('placed');
+  el.onclick = null;
+  area.appendChild(el);
+  document.getElementById('checkStage3').style.display = 'inline-block';
+}
+
+function resetStage3() {
+  renderStage();
+}
+
+function checkStage3() {
+  const area = document.getElementById('reconArea');
+  const built = [...area.children].map(el => el.textContent).join('');
+  const target = currentChunk.chunk;
+  const fb = document.getElementById('fb3');
+  if (built === target) {
+    area.classList.add('filled');
+    fb.innerHTML = `✅ 正确！<b>${target}</b>`;
+    fb.style.display = 'block';
+    setTimeout(() => { currentStage = 3; renderStage(); }, 1400);
+  } else {
+    fb.innerHTML = `❌ 再试试。当前：${built}`;
+    fb.style.display = 'block';
+    fb.style.color = '#f87171';
+  }
+}
+
+/* -------- 关卡四：创造（自由输出） -------- */
+function renderStage4(card, indicator) {
+  const c = currentChunk;
+  card.innerHTML = `${indicator}
+    <h2>关卡四 · 创造</h2>
+    <p class="hint">用“<b>${c.chunk}</b>”写一句话或一小段。不评判对错，先写出来。</p>
+    <textarea class="create-input" id="createInput" placeholder="在这里写下你的表达..."></textarea>
+    <div class="row">
+      <button class="btn-main" onclick="submitStage4()">提交并查看参考</button>
+    </div>
+    <div id="refBox" style="display:none;">
+      <div class="example-box">
+        <b>参考范例：</b><br>${c.example}
+      </div>
+      <p class="hint" style="margin-top:12px;">对照一下，你的表达和参考范例有什么不同？</p>
+      <button class="btn-main btn-green" onclick="finishChunk(1)">我写得不错</button>
+      <button class="btn-main btn-amber" onclick="finishChunk(0)">还需要再练</button>
+    </div>`;
+}
+
+function submitStage4() {
+  const val = document.getElementById('createInput').value.trim();
+  if (!val) { showToast('先写点什么吧', true); return; }
+  document.getElementById('refBox').style.display = 'block';
+}
+
+function finishChunk(bonus) {
+  const c = currentChunk;
+  c.reviews = (c.reviews || 0) + 1;
+  if (bonus) c.level = Math.min(5, c.level + 1);
+  // 间隔调度：level 越高，间隔越长
+  const days = [1, 1, 2, 4, 7, 15][c.level] || 1;
+  c.nextReview = Date.now() + days * 24 * 60 * 60 * 1000;
+  saveBank();
+  showToast(`完成！下次复习：${days} 天后`);
+  currentChunk = null;
+  setTimeout(() => { renderTrainHome(); renderReview(); }, 600);
+}
+
+/* ============================================================
+   复习队列
+   ============================================================ */
+function renderReview() {
+  const stats = document.getElementById('reviewStats');
+  const list = document.getElementById('reviewList');
+  if (chunks.length === 0) {
+    stats.innerHTML = '';
+    list.innerHTML = '<p class="hint">还没有语块，去导入吧。</p>';
+    return;
+  }
+  const now = Date.now();
+  const due = chunks.filter(c => c.nextReview <= now).length;
+  const mastered = chunks.filter(c => c.level >= 4).length;
+  const total = chunks.length;
+
+  stats.innerHTML = `
+    <div class="stat-box"><div class="num">${total}</div><div class="label">语块总数</div></div>
+    <div class="stat-box"><div class="num" style="color:#f59e0b;">${due}</div><div class="label">待复习</div></div>
+    <div class="stat-box"><div class="num" style="color:#22c55e;">${mastered}</div><div class="label">已熟练</div></div>`;
+
+  const sorted = [...chunks].sort((a,b) => a.nextReview - b.nextReview);
+  list.innerHTML = sorted.map(c => {
+    const isDue = c.nextReview <= now;
+    const days = Math.ceil((c.nextReview - now) / (24*60*60*1000));
+    const status = isDue ? '🔴 待复习' : `⏳ ${days} 天后`;
+    return `<div class="chunk-item" onclick='startTraining(${JSON.stringify(c).replace(/'/g, "&apos;")})'>
+      <div class="intent">${c.intent}</div>
+      <div class="chunk-text">${c.chunk}</div>
+      <div class="meta"><span>${c.register} · ${c.type}</span><span>${status}</span></div>
+      <div class="level-bar"><div class="level-fill" style="width:${c.level*20}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+/* ============================================================
+   表达力报告
+   ============================================================ */
+function renderReport() {
+  const box = document.getElementById('reportContent');
+  if (chunks.length === 0) {
+    box.innerHTML = '<p class="hint">还没有数据，先去训练吧。</p>';
+    return;
+  }
+  const total = chunks.length;
+  const mastered = chunks.filter(c => c.level >= 4).length;
+  const academic = chunks.filter(c => c.register === '学术').length;
+  const general = chunks.filter(c => c.register === '通用').length;
+  const totalReviews = chunks.reduce((s, c) => s + (c.reviews || 0), 0);
+
+  const byType = {};
+  chunks.forEach(c => { byType[c.type] = (byType[c.type] || 0) + 1; });
+
+  box.innerHTML = `
+    <div class="review-stats">
+      <div class="stat-box"><div class="num">${total}</div><div class="label">语块总数</div></div>
+      <div class="stat-box"><div class="num" style="color:#22c55e;">${mastered}</div><div class="label">已熟练</div></div>
+      <div class="stat-box"><div class="num" style="color:#a78bfa;">${totalReviews}</div><div class="label">总训练次数</div></div>
+    </div>
+    <h3 style="color:#a78bfa;">语域分布</h3>
+    <p class="hint">学术：${academic} 条　|　通用：${general} 条</p>
+    <h3 style="color:#a78bfa;margin-top:20px;">类型分布</h3>
+    <p class="hint">${Object.entries(byType).map(([k,v]) => `${k}：${v} 条`).join('　|　')}</p>
+    <h3 style="color:#a78bfa;margin-top:20px;">阶段提示</h3>
+    <p class="hint">${mastered >= 20 ? '你已能熟练调用 ' + mastered + ' 个语块，足以支撑一篇课程论文的核心论证段落。' : '继续训练，当熟练语块达到 20 个以上时，你的表达会明显更流畅。'}</p>
+    <button class="btn-main" onclick="exportReport()">导出报告</button>
+  `;
+}
+
+function exportReport() {
+  const total = chunks.length;
+  const mastered = chunks.filter(c => c.level >= 4).length;
+  const text = `语块进阶 · 表达力报告\n生成时间：${new Date().toLocaleString()}\n\n语块总数：${total}\n已熟练：${mastered}\n\n${chunks.map(c => `[Lv.${c.level}] ${c.chunk} —— ${c.intent}`).join('\n')}`;
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '语块表达力报告.txt';
+  a.click();
+}
+
+/* ============================================================
+   工具
+   ============================================================ */
+function showToast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => { t.className = 'toast'; }, 2000);
+}
+
+function showPanel(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (id === 'review') renderReview();
+  if (id === 'report') renderReport();
+  if (id === 'train') renderTrainHome();
+}
+
+/* ============================================================
+   启动
+   ============================================================ */
+if (loadBank()) {
+  document.getElementById('importStatus').textContent = `已载入上次语块库：${chunks.length} 条`;
+}
+renderTrainHome();
+</script>
+</body>
+</html>
